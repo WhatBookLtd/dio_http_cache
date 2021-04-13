@@ -47,14 +47,17 @@ class DioCacheManager {
     }
     var responseDataFromCache = await _pullFromCacheBeforeMaxAge(options);
     if (null != responseDataFromCache) {
-      return handler.resolve(_buildResponse(
-          responseDataFromCache, responseDataFromCache.statusCode, options), true);
+      return handler.resolve(
+          _buildResponse(
+              responseDataFromCache, responseDataFromCache.statusCode, options),
+          true);
     }
     return handler.next(options);
   }
 
   _onResponse(Response response, ResponseInterceptorHandler handler) async {
-    if ((response.requestOptions.extra[DIO_CACHE_KEY_TRY_CACHE] ?? false) == true &&
+    if ((response.requestOptions.extra[DIO_CACHE_KEY_TRY_CACHE] ?? false) ==
+            true &&
         response.statusCode != null &&
         response.statusCode! >= 200 &&
         response.statusCode! < 300) {
@@ -65,10 +68,11 @@ class DioCacheManager {
 
   _onError(DioError e, ErrorInterceptorHandler handler) async {
     if ((e.requestOptions.extra[DIO_CACHE_KEY_TRY_CACHE] ?? false) == true) {
-      var responseDataFromCache = await _pullFromCacheBeforeMaxStale(e.requestOptions);
+      var responseDataFromCache =
+          await _pullFromCacheBeforeMaxStale(e.requestOptions);
       if (null != responseDataFromCache)
-        return _buildResponse(responseDataFromCache,
-            responseDataFromCache.statusCode, e.requestOptions);
+        return handler.resolve(_buildResponse(responseDataFromCache,
+            responseDataFromCache.statusCode, e.requestOptions));
     }
     return handler.next(e);
   }
@@ -146,8 +150,10 @@ class DioCacheManager {
       // try to get maxAge and maxStale from cacheControl
       Map<String, String?> parameters;
       try {
-        parameters = HeaderValue.parse("${HttpHeaders.cacheControlHeader}: $cacheControl",
-                parameterSeparator: ",", valueSeparator: "=")
+        parameters = HeaderValue.parse(
+                "${HttpHeaders.cacheControlHeader}: $cacheControl",
+                parameterSeparator: ",",
+                valueSeparator: "=")
             .parameters;
         _maxAge = _tryGetDurationFromMap(parameters, "s-maxage");
         if (null == _maxAge) {
@@ -178,7 +184,8 @@ class DioCacheManager {
     callback(_maxAge, maxStale);
   }
 
-  Duration? _tryGetDurationFromMap(Map<String, String?> parameters, String key) {
+  Duration? _tryGetDurationFromMap(
+      Map<String, String?> parameters, String key) {
     if (parameters.containsKey(key)) {
       var value = int.tryParse(parameters[key]!);
       if (null != value && value >= 0) {
